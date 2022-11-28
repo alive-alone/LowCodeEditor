@@ -1,8 +1,19 @@
-import { createStore } from "vuex"
+import { createStore, Store, useStore as useVuexStore } from "vuex"
 
-export default createStore({
-  state: {},
+import { IRootState, IStoreType } from "./types"
+
+const store = createStore<IRootState>({
+  state() {
+    return {}
+  },
   mutations: {},
+  getters: {},
   actions: {},
   modules: {},
 })
+
+export function useStore(): Store<IStoreType> {
+  return useVuexStore()
+}
+
+export default store
