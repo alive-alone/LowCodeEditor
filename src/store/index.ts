@@ -1,5 +1,7 @@
 import { createStore, Store, useStore as useVuexStore } from "vuex"
 
+import LowCodeModule from "./lowCode/lowCode"
+
 import { IRootState, IStoreType } from "./types"
 
 const store = createStore<IRootState>({
@@ -9,7 +11,9 @@ const store = createStore<IRootState>({
   mutations: {},
   getters: {},
   actions: {},
-  modules: {},
+  modules: {
+    LowCodeModule,
+  },
 })
 
 export function useStore(): Store<IStoreType> {
