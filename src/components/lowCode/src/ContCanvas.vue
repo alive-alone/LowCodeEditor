@@ -2,18 +2,6 @@
   <div class="cont-canvas">
     <div class="canvas-body">
       <div class="content-canvas" id="canvas">
-        <!-- <div
-          draggable
-          id="title"
-          class="draggable"
-          :style="{ top: `${location.top}px`, left: `${location.left}px` }"
-        >
-          <div style="background-color: #fff; width: 100px">
-            <span>一级标题</span>
-          </div>
-        </div>
-                    @blur="blurFunc(block)"
-        -->
         <template v-for="block in blocks" :key="block.id">
           <RenderBlock
             tabindex="0"
@@ -109,7 +97,6 @@ export default defineComponent({
       },
     })
     const mousedownFunc = (event: MouseEvent, box: any) => {
-      isDragging.value = true
       if (keyboardState.ctrlKey) {
         ctx.emit("updateEditBlocksId", { type: "add", id: box.id })
       } else {
@@ -151,6 +138,8 @@ export default defineComponent({
       const x1 = event.clientX
       const y1 = event.clientY
       document.onmousemove = (e) => {
+        // 标记正在拖拽
+        isDragging.value = true
         block.dragging = true
         const x2 = e.clientX
         const y2 = e.clientY

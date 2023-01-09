@@ -1,0 +1,24 @@
+@font-face {
+  font-family: "EN-autograph";
+  src: url("./font-family/风楷.ttf");
+}
+
+@font-face {
+  font-family: "Pen";
+  src: url("./font-family//钢笔体.ttf");
+}
+
+@font-face {
+  font-family: "Handwritiong";
+  src: url("./font-family//手写体.ttf");
+}
+
+@font-face {
+  font-family: "Ink";
+  src: url("./font-family//汉仪仕杰墨榜.ttf");
+}
+
+@font-face {
+  font-family: "Writing-brush";
+  src: url("./font-family//毛笔体.ttf");
+}

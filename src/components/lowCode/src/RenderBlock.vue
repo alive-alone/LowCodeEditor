@@ -114,6 +114,7 @@ export default defineComponent({
       boxShadow: `${props.blocks.boxShadow}`,
       fontFamily: `${props.blocks.fontFamily}`,
       fontWeight: `${props.blocks.fontWeight}`,
+      fontStyle: `${props.blocks.fontStyle}`,
     }))
     // 标签属性
     const attbutes: Ref<any> = computed(() => ({

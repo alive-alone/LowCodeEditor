@@ -5,6 +5,7 @@ import store from "./store"
 
 import "./assets/icon/index"
 import "@/assets/css/base.css"
+import "@/assets/font/FontFamily.css"
 import SvgIcon from "@/components/common/SvgIcon.vue"
 
 const app = createApp(App)

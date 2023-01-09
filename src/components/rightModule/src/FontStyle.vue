@@ -16,24 +16,25 @@
       <h2>文字选项</h2>
       <div class="font-design">
         <el-select-v2
-          v-model="value"
+          v-model="fontFimaly"
           filterable
-          :options="options"
+          :options="fontFimalyOptions"
           placeholder="Please select"
           size="large"
         />
         <div class="font-size">
           <el-select-v2
             class="font-size-select"
-            v-model="value"
-            :options="options"
+            v-model="fontSize"
+            :options="fontSizeOptions"
             placeholder="Please select"
             size="large"
             filterable
+            allow-create
           />
           <div class="size-opera">
-            <span role="button" class="font-size__increase"></span>
-            <span role="button" class="font-size__decrease"></span>
+            <span role="button" class="font-size__increase" @click="changeFontSize(1)"></span>
+            <span role="button" class="font-size__decrease" @click="changeFontSize(-1)"></span>
           </div>
         </div>
         <div class="text-control_buttons">
@@ -44,6 +45,7 @@
               'text-control_item': true,
               item_border: index == 0 || index == 4 ? false : true,
             }"
+            @click="textControl(index)"
           >
             <SvgIcon class="item" :icon-name="item[0]"></SvgIcon>
           </div>
@@ -79,7 +81,7 @@ export default defineComponent({
     },
   },
   setup(props, ctx) {
-    // let fontColor = ref("#FDEBFF")
+    // 字体颜色
     let fontColor: Ref<any> = computed({
       get() {
         if (props.editBlocks?.length !== 0) {
@@ -93,14 +95,7 @@ export default defineComponent({
       },
     })
     let borderColor = ref("#8652FF")
-    // let textContentValue = ref(props.editBlocks.length ? props.editBlocks[0].text : "")
-    let textContentValue = computed(() => {
-      if (props.editBlocks?.length !== 0) {
-        return props.editBlocks[0].text
-      } else {
-        return ""
-      }
-    })
+    // 字体内容
     let blockTextContence: Ref<any> = computed({
       get() {
         if (props.editBlocks?.length !== 0) {
@@ -113,7 +108,32 @@ export default defineComponent({
         ctx.emit("changeBlockStyle", { text: value })
       },
     })
-    const initials = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+    // 字体
+    let fontFimaly: Ref<any> = computed({
+      get() {
+        if (props.editBlocks?.length !== 0) {
+          return props.editBlocks[0].fontFamily === "" ? "默认字体" : props.editBlocks[0].fontFamily
+        } else {
+          return ""
+        }
+      },
+      set(value) {
+        ctx.emit("changeBlockStyle", { fontFamily: value })
+      },
+    })
+    // 字号
+    let fontSize: Ref<any> = computed({
+      get() {
+        if (props.editBlocks?.length !== 0) {
+          return `${props.editBlocks[0].fontSize}px`
+        } else {
+          return ""
+        }
+      },
+      set(value) {
+        ctx.emit("changeBlockStyle", { fontSize: value })
+      },
+    })
     const textControlOptions = [
       ["bold"],
       ["italic"],
@@ -124,19 +144,72 @@ export default defineComponent({
       ["word-space"],
       ["row-space"],
     ]
-    const value = ref()
-    const options = Array.from({ length: 1000 }).map((_, idx) => ({
-      value: `Option ${idx + 1}`,
-      label: `${initials[idx % 10]}${idx}`,
+    const fontFamilyArr = [
+      ["默认字体", ""],
+      ["签名字体", "EN-autograph"],
+      ["钢笔字体", "Pen"],
+      ["手写字体", "Handwritiong"],
+      ["墨体", "Ink"],
+      ["毛笔体", "Writing-brush"],
+    ]
+    const fontFimalyOptions = Array.from({ length: 6 }).map((_, index) => ({
+      value: fontFamilyArr[index][1],
+      label: fontFamilyArr[index][0],
     }))
+    const fontSizeArr = [
+      "12",
+      "14",
+      "16",
+      "18",
+      "20",
+      "24",
+      "26",
+      "30",
+      "36",
+      "48",
+      "60",
+      "72",
+      "84",
+      "96",
+      "108",
+      "120",
+    ]
+    const fontSizeOptions = Array.from({ length: fontSizeArr.length }).map((_, index) => ({
+      value: fontSizeArr[index],
+      label: fontSizeArr[index],
+    }))
+    const changeFontSize = (value: number) => {
+      // fontSize.value += value
+      if (props.editBlocks?.length !== 0) {
+        ctx.emit("changeBlockStyle", { fontSize: Number(props.editBlocks[0].fontSize) + value })
+      }
+    }
+    const textControl = (index: number) => {
+      if (index === 0) {
+        if (props.editBlocks[0].fontWeight <= 400) {
+          ctx.emit("changeBlockStyle", { fontWeight: 700 })
+        } else {
+          ctx.emit("changeBlockStyle", { fontWeight: 400 })
+        }
+      } else if (index === 1) {
+        if (props.editBlocks[0].fontStyle == "") {
+          ctx.emit("changeBlockStyle", { fontStyle: "oblique" })
+        } else {
+          ctx.emit("changeBlockStyle", { fontStyle: "" })
+        }
+      }
+    }
     return {
       fontColor,
       borderColor,
-      value,
-      options,
+      fontFimaly,
+      fontSize,
+      fontFimalyOptions,
       textControlOptions,
-      textContentValue,
       blockTextContence,
+      fontSizeOptions,
+      changeFontSize,
+      textControl,
     }
   },
 })
@@ -217,7 +290,8 @@ export default defineComponent({
             -webkit-justify-content: center;
             justify-content: center;
             border-left: 1px solid #e0e5ea;
-            color: #444950;
+            // color: #444950;
+            color: #595959;
             cursor: pointer;
           }
           .font-size__increase {
