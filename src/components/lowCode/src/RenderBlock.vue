@@ -7,27 +7,84 @@
       :title="attbutes.title"
       :class="attbutes.className"
     >
-      <Mapping :styleValue="insideStyle" :attbutes="attbutes" :typeKey="blocks.key"></Mapping>
+      <Mapping :styleValue="insideStyle" :attbutes="attbutes" :typeKey="block.key"></Mapping>
     </div>
     <template v-if="focus">
       <div :style="focusBox" :class="{ 'focus-box': true, 'focus-box-drag': dragging }">
-        <i class="editor-grip editor-grip-sw" style="padding: 0px">
+        <!-- 左下角拉伸 -->
+        <i
+          class="editor-grip editor-grip-sw"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 'sw')"
+          @mousedown.stop
+        >
           <b class="spot"></b>
         </i>
-        <i class="editor-grip editor-grip-w" style="padding: 0px">
+        <!-- 左拉伸 -->
+        <i
+          class="editor-grip editor-grip-w"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 'w')"
+          @mousedown.stop
+        >
           <b class="strip"></b>
         </i>
-        <i class="editor-grip editor-grip-nw" style="padding: 0px">
+        <!-- 左上角拉伸 -->
+        <i
+          class="editor-grip editor-grip-nw"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 'nw')"
+          @mousedown.stop
+        >
           <b class="spot"></b>
         </i>
-        <i class="editor-grip editor-grip-ne" style="padding: 0px">
+
+        <!-- 右上角拉伸 -->
+        <i
+          class="editor-grip editor-grip-ne"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 'ne')"
+          @mousedown.stop
+        >
           <b class="spot"></b>
         </i>
-        <i class="editor-grip editor-grip-e" style="padding: 0px">
+        <!-- 右拉伸 -->
+        <i
+          class="editor-grip editor-grip-e"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 'e')"
+          @mousedown.stop
+        >
           <b class="strip"></b>
         </i>
-        <i class="editor-grip editor-grip-se" style="padding: 0px">
+        <!-- 右下角拉伸 -->
+        <i
+          class="editor-grip editor-grip-se"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 'se')"
+          @mousedown.stop
+        >
           <b class="spot"></b>
+        </i>
+        <!-- 上拉伸 -->
+        <i
+          v-if="block.key === 'img'"
+          class="editor-grip editor-grip-n"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 'n')"
+          @mousedown.stop
+        >
+          <b class="horiz"></b>
+        </i>
+        <!-- 下拉伸 -->
+        <i
+          v-if="block.key === 'img'"
+          class="editor-grip editor-grip-s"
+          style="padding: 0px"
+          @mousedown.prevent="mouseZoom($event, block, 's')"
+          @mousedown.stop
+        >
+          <b class="horiz"></b>
         </i>
       </div>
     </template>
@@ -46,7 +103,7 @@ export default defineComponent({
     Mapping,
   },
   props: {
-    blocks: {
+    block: {
       type: Object as any,
     },
     focus: {
@@ -63,87 +120,81 @@ export default defineComponent({
     //外部基本样式
     const externalStyle: Ref<any> = computed(() => ({
       position: "absolute",
-      left: `${props.blocks.left}px`,
-      top: `${props.blocks.top}px`,
-      zIndex: props.blocks.zIndex,
-      userSelect: props.blocks.userSelect ? props.blocks.userSelect : "",
-      cursor: props.blocks.cursor ? props.blocks.cursor : "",
+      left: `${props.block.left}px`,
+      top: `${props.block.top}px`,
+      zIndex: props.block.zIndex,
+      userSelect: props.block.userSelect ? props.block.userSelect : "",
+      cursor: props.block.cursor ? props.block.cursor : "",
       width: `${
-        props.blocks.key !== "img"
-          ? props.blocks.width
-          : props.blocks.width
-          ? props.blocks.width
-          : 50
+        props.block.key !== "img" ? props.block.width : props.block.width ? props.block.width : 50
       }px`,
       height: `${
-        props.blocks.key !== "img"
-          ? props.blocks.height
-          : props.blocks.height
-          ? props.blocks.height
+        props.block.key !== "img"
+          ? props.block.height
+          : props.block.height
+          ? props.block.height
           : 50
       }px`,
     }))
     // 内部基本样式
     const insideStyle: Ref<any> = computed(() => ({
-      maxWidth: `${
-        props.blocks.key !== "img"
-          ? props.blocks.width - 10
-          : props.blocks.width
-          ? props.blocks.width
-          : 50
-      }px`,
-      maxHeight: `${
-        props.blocks.key !== "img"
-          ? props.blocks.height
-          : props.blocks.height
-          ? props.blocks.height
-          : 50
-      }px`,
-      display: `${props.blocks.display}`,
-      color: `${props.blocks.color}`,
-      fontSize: `${props.blocks.fontSize}px`,
-      // `${props.blocks.padding}px` computedPaddding(props.blocks.padding)
-      padding: computedPaddding(props.blocks.padding),
-      background: `${props.blocks.background}`,
-      borderWidth: `${props.blocks.borderWidth}px`,
-      borderColor: `${props.blocks.borderColor}`,
-      borderType: `${props.blocks.borderType}`,
-      borderRadius: `${props.blocks.borderRadius}px`,
-      textAlign: `${props.blocks.textAlign}`,
-      lineHeight: props.blocks.lineHeight ? `${props.blocks.lineHeight}px` : "",
-      boxShadow: `${props.blocks.boxShadow}`,
-      fontFamily: `${props.blocks.fontFamily}`,
-      fontWeight: `${props.blocks.fontWeight}`,
-      fontStyle: `${props.blocks.fontStyle}`,
-    }))
-    // 标签属性
-    const attbutes: Ref<any> = computed(() => ({
-      className: `${props.blocks.class ? props.blocks.class : ""}`,
-      text: `${props.blocks.text ? props.blocks.text : ""}`,
-      title: `${props.blocks.title ? props.blocks.title : ""}`,
-      placeholder: `${props.blocks.placeholder ? props.blocks.placeholder : ""}`,
-      type: `${props.blocks.type ? props.blocks.type : ""}`,
-      src: `${props.blocks.src ? props.blocks.src : ""}`,
-      alt: `${props.blocks.alt ? props.blocks.alt : ""}`,
-    }))
-    const focusBox: Ref<any> = computed(() => ({
       width: `${
-        props.blocks.key !== "img"
-          ? props.blocks.width
-          : props.blocks.width
-          ? props.blocks.width
+        props.block.key !== "img"
+          ? props.block.width - 10
+          : props.block.width
+          ? props.block.width
           : 50
       }px`,
       height: `${
-        props.blocks.key !== "img"
-          ? props.blocks.height
-          : props.blocks.height
-          ? props.blocks.height
+        props.block.key !== "img"
+          ? props.block.height
+          : props.block.height
+          ? props.block.height
           : 50
       }px`,
-      position: "reactive",
-      left: `${props.blocks.left}px`,
-      top: `${props.blocks.top}px`,
+      display: `${props.block.display}`,
+      color: `${props.block.color}`,
+      fontSize: `${props.block.fontSize}px`,
+      // `${props.block.padding}px` computedPaddding(props.block.padding)
+      padding: computedPaddding(props.block.padding),
+      background: `${props.block.background}`,
+      borderWidth: `${props.block.borderWidth}px`,
+      borderColor: `${props.block.borderColor}`,
+      borderType: `${props.block.borderType}`,
+      borderRadius: `${props.block.borderRadius}px`,
+      textAlign: `${props.block.textAlign}`,
+      lineHeight: props.block.lineHeight ? `${props.block.lineHeight}px` : "",
+      boxShadow: `${props.block.boxShadow}`,
+      fontFamily: `${props.block.fontFamily}`,
+      fontWeight: `${props.block.fontWeight}`,
+      fontStyle: `${props.block.fontStyle}`,
+      opacity: props.block.opacity,
+      zIndex: 1,
+    }))
+    // 标签属性
+    const attbutes: Ref<any> = computed(() => ({
+      className: `${props.block.class ? props.block.class : ""}`,
+      text: `${props.block.text ? props.block.text : ""}`,
+      title: `${props.block.title ? props.block.title : ""}`,
+      placeholder: `${props.block.placeholder ? props.block.placeholder : ""}`,
+      type: `${props.block.type ? props.block.type : ""}`,
+      src: `${props.block.src ? props.block.src : ""}`,
+      alt: `${props.block.alt ? props.block.alt : ""}`,
+    }))
+    const focusBox: Ref<any> = computed(() => ({
+      width: `${
+        props.block.key !== "img" ? props.block.width : props.block.width ? props.block.width : 50
+      }px`,
+      height: `${
+        props.block.key !== "img"
+          ? props.block.height
+          : props.block.height
+          ? props.block.height
+          : 50
+      }px`,
+      // position: "reactive",
+      // left: `${props.blocks.left}px`,
+      // top: `${props.blocks.top}px`,
     }))
     const computedPaddding = (str: string) => {
       let arr = str.split(" ")
@@ -153,12 +204,57 @@ export default defineComponent({
         })
         .join(" ")
     }
+    const mouseZoom = (event: MouseEvent, block: any, type: string) => {
+      block.focus = true
+      block.dragging = true
+      document.onmousemove = (e) => {
+        let scaleVal = e.movementX / (block.width / block.height)
+        if (type === "sw") {
+          block.width -= e.movementX
+          block.height -= scaleVal
+          block.left += e.movementX
+        } else if (type === "nw") {
+          block.width -= e.movementX
+          block.height -= scaleVal
+          block.top += scaleVal
+          block.left += e.movementX
+        } else if (type === "ne") {
+          block.width += e.movementX
+          block.height += scaleVal
+          block.top -= scaleVal
+        } else if (type === "se") {
+          block.width += e.movementX
+          block.height += scaleVal
+        } else if (type === "e") {
+          block.width += e.movementX
+        } else if (type === "w") {
+          block.width -= e.movementX
+          block.left += e.movementX
+        } else if (type === "n") {
+          block.height -= e.movementY
+          block.top += e.movementY
+        } else if (type === "s") {
+          block.height += e.movementY
+        }
+        if (block.key === "text") {
+          if (block.fontSize > 9) {
+            block.lineHeight = block.height
+            block.fontSize = (0.8 * block.height).toFixed(1)
+          }
+        }
+      }
+      document.onmouseup = function () {
+        block.dragging = false
+        document.onmousemove = document.onmouseup = null
+      }
+    }
     return {
       blockRef,
       externalStyle,
       insideStyle,
       attbutes,
       focusBox,
+      mouseZoom,
     }
   },
 })
@@ -178,14 +274,22 @@ export default defineComponent({
   border: none;
 }
 .focus-box {
-  display: block;
-  border: 1px solid #759fff;
+  // display: block;
+  // border: 2px solid #6ccfff;
   transform: matrix(1, 0, 0, 1, 0, 0);
   opacity: 1;
   transition: opacity 100ms;
+  // margin: -2px 0 0 -2px;
+  // margin: -1px 0;
+  // position: relative;
+  position: absolute;
+  z-index: 5;
+  box-sizing: border-box;
+  cursor: move;
   .editor-grip {
     position: absolute;
     transform: translate(-50%, -50%);
+    z-index: 2;
   }
   .editor-grip-sw {
     top: 100%;
@@ -203,6 +307,11 @@ export default defineComponent({
     top: 0;
     left: 0;
     cursor: nwse-resize;
+  }
+  .editor-grip-n {
+    left: 50%;
+    margin-top: -1px;
+    cursor: ns-resize;
   }
   .editor-grip-ne {
     left: 100%;
@@ -223,6 +332,11 @@ export default defineComponent({
     margin-left: 1px;
     cursor: nwse-resize;
   }
+  .editor-grip-s {
+    left: 50%;
+    top: 100%;
+    cursor: ns-resize;
+  }
   .spot {
     width: 10px;
     height: 10px;
@@ -231,6 +345,11 @@ export default defineComponent({
   .strip {
     width: 7px;
     height: 11px;
+    border-radius: 30%;
+  }
+  .horiz {
+    width: 14px;
+    height: 7px;
     border-radius: 30%;
   }
   b {
@@ -242,8 +361,21 @@ export default defineComponent({
     transition: opacity 300ms;
   }
 }
+.focus-box::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  box-sizing: content-box;
+  width: 100%;
+  height: 100%;
+  margin: -2px 0 0 -2px;
+  border: 2px solid #6ccfff;
+  content: "";
+}
 .focus-box-drag {
-  opacity: 0.4;
+  opacity: 0.3;
+  border: 1px solid #6ccfff;
   b {
     opacity: 0;
   }

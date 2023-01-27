@@ -5,6 +5,10 @@ import { IRootState } from "../types"
 
 import { getDtId } from "@/assets/ts/lowCode/index"
 
+import { getCodeModulesRequest, postCodeModulesRequest } from "@/service/codeModules/codeModules"
+import { getImages, deleteImage } from "@/service/images/images"
+import { getVideos, deleteVideo } from "@/service/videos/videos"
+
 const moduleDatas = require("@/views/datas.json")
 // position: [left, left + width / 2, left + width, top, top + height / 2, top + height]
 
@@ -40,8 +44,8 @@ const LowCodeModule: Module<LowCodeStore, IRootState> = {
         },
         {
           id: 5,
-          icon: "background",
-          title: "背景",
+          icon: "video",
+          title: "视频",
         },
         {
           id: 6,
@@ -59,6 +63,9 @@ const LowCodeModule: Module<LowCodeStore, IRootState> = {
       nearGuidelines: [],
       editingBlocksId: [],
       activeIndex: 0,
+      unique_key: "alive",
+      userImages: [],
+      userVideos: [],
     }
   },
   getters: {
@@ -79,6 +86,12 @@ const LowCodeModule: Module<LowCodeStore, IRootState> = {
     },
     getNearGuidelines(state) {
       return state.nearGuidelines
+    },
+    getUserImages(state) {
+      return state.userImages
+    },
+    getUserVideos(state) {
+      return state.userVideos
     },
   },
   mutations: {
@@ -140,8 +153,58 @@ const LowCodeModule: Module<LowCodeStore, IRootState> = {
     changeNearGuidelines(state, values: Array<any>) {
       state.nearGuidelines = values
     },
+    changeUserImages(state, values: Array<any>) {
+      state.userImages = values
+    },
+    changeUserVideos(state, values: Array<any>) {
+      state.userVideos = values
+    },
   },
   actions: {
+    // 获取 codeModules datas
+    async getCodeModulesDatas({ state, commit }) {
+      const result = await getCodeModulesRequest(state.unique_key)
+      console.log(result)
+      // const blocks = JSON.parse(result.data.blocks)
+      // const position = JSON.parse(result.data.position)
+      commit("changeModuleDatas", JSON.parse(result.data.blocks))
+      commit("changeModuleNearPosition", JSON.parse(result.data.position))
+    },
+    // 更新 codeModules datas
+    async postCodeModulesDatas({ state }) {
+      console.log(state.moduleDatas)
+      const result = await postCodeModulesRequest({
+        blocks: JSON.stringify(state.moduleDatas),
+        position: JSON.stringify(state.moduleNearPosition),
+        unique_key: state.unique_key,
+      })
+      if (result.code !== 200) {
+        console.log(result)
+      }
+    },
+    // 获取 userImages or userVideos
+    async getUserImgOrVideo({ commit }, type: string) {
+      if (type === "img") {
+        const result = await getImages()
+        commit("changeUserImages", result.data)
+      } else if (type === "video") {
+        const result = await getVideos()
+        commit("changeUserVideos", result.data)
+      }
+    },
+    // 根据 id 删除 userImages image
+    async deleteUserImgOrVideo({ dispatch }, values: { id: string; type: string }) {
+      let result
+      if (values.type === "img") {
+        result = await deleteImage(values.id)
+      } else if (values.type === "video") {
+        result = await deleteVideo(values.id)
+      }
+      if (result && result.code === 200) {
+        dispatch("getUserImgOrVideo", values.type)
+      }
+    },
+    // 添加文本
     addText({ state, commit, dispatch }, type: string) {
       const id = getDtId()
       let modules
@@ -170,6 +233,51 @@ const LowCodeModule: Module<LowCodeStore, IRootState> = {
       dispatch("editBlocksNearPos", { type: "add", pos: curPos, id: id })
       commit("changeModuleDatas", [...state.moduleDatas, modules])
     },
+    // 添加图片
+    addImage({ state, commit }, values: { src: string; scale: number }) {
+      const id = getDtId()
+      const modules = {
+        ...moduleDatas.modules.addImage,
+      }
+      modules.id = id
+      modules.src = values.src
+      if (values.scale > 1) {
+        modules.height = modules.width / values.scale
+      } else {
+        modules.height = modules.width
+        modules.width = values.scale * modules.height
+      }
+      commit("changeModuleDatas", [...state.moduleDatas, modules])
+    },
+    // 添加视频
+    addVideo({ state, commit }, values: { src: string; scale: number }) {
+      const id = getDtId()
+      const modules = {
+        ...moduleDatas.modules.addVideo,
+      }
+      modules.id = id
+      modules.src = values.src
+      if (values.scale > 1) {
+        modules.height = modules.width / values.scale
+      } else {
+        modules.height = modules.width
+        modules.width = values.scale * modules.height
+      }
+      commit("changeModuleDatas", [...state.moduleDatas, modules])
+    },
+    // 多模块移动
+    blocksMove({ state, commit }, values: { difTop: number; difLeft: number }) {
+      const arr = [...state.moduleDatas]
+      arr.forEach((block) => {
+        if (state.editingBlocksId.includes(block.id)) {
+          block.dragging = true
+          block.top += values.difTop
+          block.left += values.difLeft
+        }
+      })
+      commit("changeModuleDatas", [...arr])
+    },
+    // 编辑模块 id 操作
     editBlocksId({ state, commit }, values: { type: string; id: string }) {
       let arr = [""]
       if (values.type === "add") {
@@ -186,6 +294,7 @@ const LowCodeModule: Module<LowCodeStore, IRootState> = {
       commit("changeEditingBlocksId", [...arr])
       commit("changeBlocksFocus", [...arr])
     },
+    // 当前模块的靠近线
     editBlocksNearPos(
       { state, commit },
       values: { type: string; pos: Array<number>; id?: string }

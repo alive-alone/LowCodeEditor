@@ -5,7 +5,7 @@
       :value="attbutes.text ? attbutes.text : '双击修改文字'"
       class="textarea"
     ></textarea> -->
-    <span :style="styleValue">{{ attbutes.text }}</span>
+    <span class="mapping-text" :style="styleValue">{{ attbutes.text }}</span>
     <!-- <div class="text-edit">
       <input class="text-edit-input" :style="styleValue" placeholder="please" />
     </div> -->
@@ -13,6 +13,7 @@
   </template>
   <template v-else-if="typeKey === 'img'">
     <img
+      class="mapping-img"
       :src="attbutes.src ? attbutes.src : '@/assets/images/monster.svg'"
       :alt="attbutes.alt"
       :style="styleValue"
@@ -28,6 +29,16 @@
   </template>
   <template v-else-if="typeKey === 'button'">
     <button :style="styleValue">{{ attbutes.text ? attbutes.text : "按钮" }}</button>
+  </template>
+  <template v-else-if="typeKey === 'video'">
+    <video
+      controls
+      :style="styleValue"
+      :src="attbutes.src ? attbutes.src : '@/assets/images/monster.svg'"
+    >
+      <!-- <source :src="attbutes.src ? attbutes.src : '@/assets/images/monster.svg'" /> -->
+      您的浏览器不支持Video标签。
+    </video>
   </template>
 </template>
 
@@ -55,6 +66,10 @@ export default defineComponent({
   border: none;
   outline: none;
   resize: none;
+}
+.mapping-text {
+  // display: block;
+  text-align: center;
 }
 .text-edit {
   padding: 0 5px;

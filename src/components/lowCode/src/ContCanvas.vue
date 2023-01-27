@@ -1,18 +1,19 @@
 <template>
   <div class="cont-canvas">
-    <div class="canvas-body">
+    <div class="canvas-body" id="canvasBody" :style="{ transform: `scale(${canvasScale})` }">
       <div class="content-canvas" id="canvas">
         <template v-for="block in blocks" :key="block.id">
           <RenderBlock
             tabindex="0"
-            :blocks="block"
+            :block="block"
             :focus="block.focus"
             :dragging="block.dragging"
-            @mousedown="mousedownFunc($event, block)"
+            @mousedown.prevent="mousedownFunc($event, block)"
             @mouseenter="mouseenterFunc(block)"
             @mouseleave="mouseleaveFunc"
             @mouseup="mouseupFunc"
             @click.stop
+            @dblclick="dblclickFunction(block)"
           >
           </RenderBlock>
         </template>
@@ -32,7 +33,17 @@
         </template>
       </div>
     </div>
+    <Dialog
+      :dialogVisible="dialogVisible"
+      :datas="computedDatas"
+      :type="dialogEditType"
+      @changeDialogVisible="changeDialogVisible"
+      @getDatas="getDatas"
+      @deleteData="deleteData"
+      @publishImage="publishImage"
+    ></Dialog>
   </div>
+  <button @click="exportAsPicture">click</button>
 </template>
 
 <script lang="ts">
@@ -40,12 +51,18 @@ import { computed, defineComponent, onMounted, reactive, ref } from "vue"
 import type { Ref } from "vue"
 
 import RenderBlock from "./RenderBlock.vue"
+import { Dialog } from "@/components/dialog/index"
 import { computedNearBlockcs } from "@/assets/ts/lowCode/mouseEvent"
+import { debounce } from "@/assets/ts/lowCode/index"
+
+import domtoimage from "dom-to-image"
+// import html2canvas from "html2canvas"
 
 export default defineComponent({
   name: "",
   components: {
     RenderBlock,
+    Dialog,
   },
   emits: [
     "updateDatas",
@@ -54,6 +71,9 @@ export default defineComponent({
     "deleteBlocksById",
     "updateBlocksPos",
     "updateNearGuidelines",
+    "blocksMove",
+    "getDatas",
+    "deleteData",
   ],
   props: {
     datas: {
@@ -65,12 +85,21 @@ export default defineComponent({
     nearGuidelines: {
       type: Array,
     },
+    userImages: {
+      type: Array,
+    },
+    userVideos: {
+      type: Array,
+    },
   },
   setup(props, ctx) {
+    // 按键状态 -- 是否被按下
     const keyboardState = reactive({
       ctrlKey: false,
     })
+    // 是否正在拖拽
     let isDragging = ref(false)
+    // 鼠标进入时的边框
     let mouseenterBox = reactive({
       display: "none",
       position: "",
@@ -79,6 +108,11 @@ export default defineComponent({
       top: "0px",
       left: "0px",
     })
+    // canvas 缩放比例
+    let canvasScale = ref(0.8)
+    // dialog 显示状态
+    let dialogVisible = ref(false)
+    // 代码块
     let blocks: Ref<any> = computed({
       get() {
         return props.datas
@@ -88,6 +122,7 @@ export default defineComponent({
         ctx.emit("updateDatas", value)
       },
     })
+    // 代码块位置信息
     let blocksPos: Ref<any> = computed({
       get() {
         return props.blocksPos
@@ -96,6 +131,15 @@ export default defineComponent({
         ctx.emit("updateBlocksPos", value)
       },
     })
+    // dialog 编辑的对象 -- 双击的对象
+    let dialogEditBlock = ref<any>()
+    // dialog 编辑对象的类型 -- block.key
+    let dialogEditType = ref("img")
+    // 修改 dialogVisible
+    const changeDialogVisible = (value: boolean) => {
+      dialogVisible.value = value
+    }
+    // 鼠标按下触发 -- 用于添加或删除 edit block 代码块
     const mousedownFunc = (event: MouseEvent, box: any) => {
       if (keyboardState.ctrlKey) {
         ctx.emit("updateEditBlocksId", { type: "add", id: box.id })
@@ -105,28 +149,33 @@ export default defineComponent({
       mouseDown(event, box, blocksPos.value)
       mouseleaveFunc()
     }
+    // 鼠标松开事件 -- 拖拽事件结束
     const mouseupFunc = () => {
       isDragging.value = false
     }
+    // 鼠标进入事件
     const mouseenterFunc = (block: any) => {
       if (block.focus || isDragging.value) {
         mouseleaveFunc()
       } else {
         mouseenterBox.display = ""
-        mouseenterBox.position = "absolute"
+        // mouseenterBox.position = "absolute"
         mouseenterBox.left = `${block.left}px`
         mouseenterBox.top = `${block.top}px`
         mouseenterBox.width = `${block.width}px`
         mouseenterBox.height = `${block.height}px`
       }
     }
+    // 鼠标离开事件
     const mouseleaveFunc = () => {
       mouseenterBox.display = "none"
     }
+    // 失去焦点事件
     const blurFunc = (block: any) => {
       block.focus = false
       ctx.emit("updateEditBlocksId", { type: "delete", id: block.id })
     }
+    // 鼠标按下事件
     const mouseDown = (event: MouseEvent, block: any, position: any) => {
       const startPos = reactive({
         top: 10,
@@ -138,6 +187,7 @@ export default defineComponent({
       const x1 = event.clientX
       const y1 = event.clientY
       document.onmousemove = (e) => {
+        // console.log(e)
         // 标记正在拖拽
         isDragging.value = true
         block.dragging = true
@@ -155,6 +205,9 @@ export default defineComponent({
         )
         block.top = computedTop + difTop
         block.left = computedLeft + difLeft
+        // let difY = computedTop + difTop - block.top
+        // let difX = computedLeft + difLeft - block.left
+        // ctx.emit("blocksMove", { difTop: difY, difLeft: difX })
         const pos = [
           block.left,
           block.left + block.width / 2,
@@ -171,6 +224,89 @@ export default defineComponent({
       document.onmouseup = function () {
         block.dragging = false
         document.onmousemove = document.onmouseup = null
+      }
+    }
+    // 双击事件
+    const dblclickFunction = (bolck: any) => {
+      dialogEditBlock.value = bolck
+      dialogEditType.value = bolck.key
+      if (bolck.key === "img" || bolck.key === "video") {
+        dialogVisible.value = true
+      }
+      getDatas()
+    }
+    // 获取 canvas body 缩放比例 -- 适应屏幕
+    const getScale = () => {
+      const canvasBody = document.getElementById("canvasBody")
+      const canvas = document.getElementById("canvas")
+      let scale = 1
+      if (canvas && canvasBody) {
+        scale = Number((canvasBody.clientHeight / canvas.clientHeight).toFixed(2)) - 0.03
+      }
+      canvasScale.value = scale
+    }
+    // 获取 dialog 的 images
+    const getDatas = () => {
+      ctx.emit("getDatas", dialogEditType.value)
+    }
+    // 更换图片的 src
+    const publishImage = (src: string) => {
+      let block = dialogEditBlock.value
+      if (dialogEditType.value === "img") {
+        block.src = src
+      } else if (dialogEditType.value === "video") {
+        block.src = src
+        console.log(block)
+      }
+    }
+    // 根据 id 删除 userImages image
+    const deleteData = (id: string) => {
+      ctx.emit("deleteData", { id, type: dialogEditType.value })
+    }
+    // 按类型返回数据
+    const computedDatas = computed(() => {
+      if (dialogEditType.value === "img") {
+        return props.userImages
+      } else if (dialogEditType.value === "video") {
+        return props.userVideos
+      } else {
+        return []
+      }
+    })
+    const exportAsPicture = () => {
+      const element = document.getElementById("canvas")
+      if (element) {
+        // html2canvas(element)
+        //   .then((canvas) => {
+        //     // document.body.appendChild(canvas)
+        //     // 新增代码 返回图片的URL,设置为png格式
+        //     let dataUrl = canvas.toDataURL("image/png")
+        //     // let downloadUrl = dataUrl.replace("image/png", "image/octet-stream") //图片地址
+        //     // console.log(downloadUrl)
+        //     // window.location.href = downloadUrl // 跳转下载
+        //     const link = document.createElement("a")
+        //     link.style.display = "none"
+        //     link.href = dataUrl
+        //     link.setAttribute("download", "canvas.png")
+        //     document.body.appendChild(link)
+        //     link.click()
+        //   })
+        //   .catch((err) => {
+        //     console.log(err)
+        //   })
+        domtoimage
+          .toJpeg(element)
+          .then((dataUrl: string) => {
+            const link = document.createElement("a")
+            link.style.display = "none"
+            link.href = dataUrl
+            link.setAttribute("download", "canvas.png")
+            document.body.appendChild(link)
+            link.click()
+          })
+          .catch((err: any) => {
+            console.error("生成失败", err)
+          })
       }
     }
     onMounted(() => {
@@ -196,16 +332,29 @@ export default defineComponent({
         // 判断ctrl按键是否被按
         keyboardState.ctrlKey = event.ctrlKey
       }
+
+      window.addEventListener("resize", debounce(getScale, 300))
     })
     return {
       isDragging,
       blocks,
+      canvasScale,
       mouseenterBox,
+      dialogVisible,
+      dialogEditType,
+      computedDatas,
+      changeDialogVisible,
       mousedownFunc,
       mouseupFunc,
       mouseenterFunc,
       mouseleaveFunc,
       blurFunc,
+      dblclickFunction,
+      getScale,
+      getDatas,
+      deleteData,
+      publishImage,
+      exportAsPicture,
     }
   },
 })
@@ -213,12 +362,17 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .cont-canvas {
-  // height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  // transform: scale(0.8);
   .canvas-body {
-    padding: 30px;
+    width: 100%;
+    height: 100%;
+    // padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     .content-canvas {
       width: 460.197px;
       height: 830.101px;
@@ -226,7 +380,11 @@ export default defineComponent({
       position: relative;
       border: none;
       .mouseenter-box {
-        border: 1px solid #759fff;
+        border: 1px solid #6ccfff;
+        margin: -1px 0 0 -1px;
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
       }
       .guidelines {
         position: absolute;
@@ -235,6 +393,7 @@ export default defineComponent({
         background-color: #ea56ff;
         top: 500px;
         left: 150px;
+        z-index: 8;
       }
     }
   }

@@ -42,5 +42,8 @@ export default {
   width: 16px;
   height: 16px;
   fill: #676767;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>

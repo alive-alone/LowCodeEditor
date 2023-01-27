@@ -39,5 +39,6 @@ export default defineComponent({
 <style lang="less" scoped>
 .left-menu {
   height: 100%;
+  width: 276px;
 }
 </style>

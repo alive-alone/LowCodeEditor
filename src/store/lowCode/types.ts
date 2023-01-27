@@ -5,6 +5,9 @@ export interface LowCodeStore {
   moduleNearPosition: any
   nearGuidelines: Array<any>
   activeIndex: number
+  unique_key: string
+  userImages: Array<any>
+  userVideos: Array<any>
 }
 
 export interface leftTabsType {

@@ -65,6 +65,14 @@
         />
       </div>
     </div>
+    <div class="font-style-box">
+      <h2>高级设置</h2>
+      <div class="font-style_opacity">
+        <span class="panel-slider__label">不透明</span>
+        <el-slider class="el-slider" v-model="opacityValue" />
+      </div>
+      <!-- <textarea class="textarea"></textarea> -->
+    </div>
   </div>
 </template>
 
@@ -132,6 +140,18 @@ export default defineComponent({
       },
       set(value) {
         ctx.emit("changeBlockStyle", { fontSize: value })
+      },
+    })
+    let opacityValue: Ref<any> = computed({
+      get() {
+        if (props.editBlocks?.length !== 0) {
+          return props.editBlocks[0].opacity * 100
+        } else {
+          return 0
+        }
+      },
+      set(value) {
+        ctx.emit("changeBlockStyle", { opacity: Math.floor(value) / 100 })
       },
     })
     const textControlOptions = [
@@ -204,6 +224,7 @@ export default defineComponent({
       borderColor,
       fontFimaly,
       fontSize,
+      opacityValue,
       fontFimalyOptions,
       textControlOptions,
       blockTextContence,
@@ -386,6 +407,37 @@ export default defineComponent({
       .textarea:focus {
         outline: none;
       }
+    }
+  }
+  .font-style_opacity {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    .panel-slider__label {
+      -webkit-box-flex: 0;
+      -ms-flex: none;
+      flex: none;
+      color: var(--text-default);
+    }
+    .el-slider {
+      flex: 1;
+      margin-left: 14px;
+      margin-right: 14px;
+    }
+    .panel-slider__percent {
+      width: 40px;
+      height: 24px;
+      border: 1px solid #e8eaec;
+      outline: none;
+      border-radius: 4px;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
   }
 

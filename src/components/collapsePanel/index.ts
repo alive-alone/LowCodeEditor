@@ -1,3 +1,6 @@
-import CollapsePanel from "./CollapsePanel.vue"
+import AddText from "./src/AddText.vue"
+import AddImages from "./src/AddImage.vue"
+import AddElement from "./src/AddElement.vue"
+import AddVideo from "./src/AddVideo.vue"
 
-export { CollapsePanel }
+export { AddText, AddImages, AddElement, AddVideo }

@@ -1,7 +1,9 @@
 <template>
   <div class="low-code">
     <el-container class="el-container">
-      <el-header height="30px">Header</el-header>
+      <el-header height="30px">
+        <button>导出为图片</button>
+      </el-header>
       <el-container class="main-container">
         <LeftMenu></LeftMenu>
         <div class="collapse">
@@ -19,12 +21,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue"
+import { defineComponent, onMounted, watch } from "vue"
 
 import LeftMenu from "./leftMenu/LeftMenu.vue"
 import Content from "./content/content.vue"
 import RightMenu from "./rightMenu/RightMenu.vue"
-import { CollapsePanel } from "@/components/collapsePanel/index"
+import CollapsePanel from "./collapsePanel/CollapsePanel.vue"
+
+import { debounce } from "@/assets/ts/lowCode"
+
+import { useStore } from "@/store"
 
 export default defineComponent({
   name: "LowCode",
@@ -33,6 +39,25 @@ export default defineComponent({
     Content,
     RightMenu,
     CollapsePanel,
+  },
+  setup() {
+    const store = useStore()
+    // let datas = computed(() => store.getters["LowCodeModule/moduleNearPosition"])
+    const getCodeModulesDatas = () => {
+      store.dispatch("LowCodeModule/postCodeModulesDatas")
+    }
+    watch(
+      () => store.state.LowCodeModule.moduleDatas,
+
+      debounce(() => {
+        return getCodeModulesDatas()
+      }, 2000)
+    )
+    onMounted(() => {
+      store.dispatch("LowCodeModule/getCodeModulesDatas")
+      // store.dispatch("LowCodeModule/postCodeModulesDatas")
+    })
+    return {}
   },
 })
 </script>
@@ -63,7 +88,7 @@ export default defineComponent({
       height: 100%;
       background-color: rgb(255, 255, 255);
       border-left: 1px solid #eef2f8;
-      z-index: 6;
+      z-index: 2;
     }
   }
 }

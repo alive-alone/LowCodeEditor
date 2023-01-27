@@ -1,5 +1,6 @@
 const menu = require.context("@/assets/icon/svg/menu", false, /\.svg$/)
 const font = require.context("@/assets/icon/svg/font", false, /\.svg$/)
+const other = require.context("@/assets/icon/svg/other", false, /\.svg$/)
 
 const requireAll = (requireContext: any) => {
   // requireContext.keys()数据：['./404.svg', './agency.svg', './det.svg', './user.svg']
@@ -7,3 +8,4 @@ const requireAll = (requireContext: any) => {
 }
 requireAll(menu)
 requireAll(font)
+requireAll(other)
