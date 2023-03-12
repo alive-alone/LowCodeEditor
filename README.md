@@ -1,4 +1,4 @@
-# demo02
+# LowCodeEditor
 
 ## Project setup
 
