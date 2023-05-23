@@ -25,7 +25,7 @@ export default defineComponent({
     const title = ["为你推荐"]
     const videos = [
       [
-        "http://127.0.0.1:3000/public/videos/20230125/25113452955364.mp4",
+        "http://127.0.0.1:3000/public/videos/20230123/20190717195324.mp4",
         "http://127.0.0.1:3000/public/videos/20230123/49801469240d458cba6bb02ea6645d59.mp4",
       ],
     ]

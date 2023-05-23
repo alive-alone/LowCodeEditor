@@ -14,6 +14,7 @@
             @mouseup="mouseupFunc"
             @click.stop
             @dblclick="dblclickFunction(block)"
+            @draggingState="changeIsDragging"
           >
           </RenderBlock>
         </template>
@@ -107,6 +108,7 @@ export default defineComponent({
       height: "0px",
       top: "0px",
       left: "0px",
+      transform: `rotate(0deg)`,
     })
     // canvas 缩放比例
     let canvasScale = ref(0.8)
@@ -149,9 +151,12 @@ export default defineComponent({
       mouseDown(event, box, blocksPos.value)
       mouseleaveFunc()
     }
+    const changeIsDragging = (value: boolean) => {
+      isDragging.value = value
+    }
     // 鼠标松开事件 -- 拖拽事件结束
     const mouseupFunc = () => {
-      isDragging.value = false
+      changeIsDragging(false)
     }
     // 鼠标进入事件
     const mouseenterFunc = (block: any) => {
@@ -164,6 +169,7 @@ export default defineComponent({
         mouseenterBox.top = `${block.top}px`
         mouseenterBox.width = `${block.width}px`
         mouseenterBox.height = `${block.height}px`
+        mouseenterBox.transform = `rotate(${block.rotate}deg)`
       }
     }
     // 鼠标离开事件
@@ -189,7 +195,7 @@ export default defineComponent({
       document.onmousemove = (e) => {
         // console.log(e)
         // 标记正在拖拽
-        isDragging.value = true
+        changeIsDragging(true)
         block.dragging = true
         const x2 = e.clientX
         const y2 = e.clientY
@@ -208,6 +214,7 @@ export default defineComponent({
         // let difY = computedTop + difTop - block.top
         // let difX = computedLeft + difLeft - block.left
         // ctx.emit("blocksMove", { difTop: difY, difLeft: difX })
+        // console.log(block.left, block.top)
         const pos = [
           block.left,
           block.left + block.width / 2,
@@ -243,7 +250,7 @@ export default defineComponent({
       if (canvas && canvasBody) {
         scale = Number((canvasBody.clientHeight / canvas.clientHeight).toFixed(2)) - 0.03
       }
-      canvasScale.value = scale
+      canvasScale.value = Math.min(scale, 1)
     }
     // 获取 dialog 的 images
     const getDatas = () => {
@@ -327,12 +334,14 @@ export default defineComponent({
         } else if (event.code === "ArrowDown") {
           ctx.emit("changeBlocksPos", { type: "down", speed: -1 })
         }
+        console.log(event)
       }
       document.onkeyup = (event) => {
         // 判断ctrl按键是否被按
         keyboardState.ctrlKey = event.ctrlKey
       }
-
+      // 计算画布的缩放值
+      getScale()
       window.addEventListener("resize", debounce(getScale, 300))
     })
     return {
@@ -343,6 +352,7 @@ export default defineComponent({
       dialogVisible,
       dialogEditType,
       computedDatas,
+      changeIsDragging,
       changeDialogVisible,
       mousedownFunc,
       mouseupFunc,

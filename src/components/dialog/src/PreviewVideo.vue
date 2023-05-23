@@ -116,7 +116,7 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   left: 0;
-  animation: slow 0.5s ease-out;
+  animation: slow 0.3s ease-out;
   .image-viewer__mask {
     position: absolute;
     width: 100%;

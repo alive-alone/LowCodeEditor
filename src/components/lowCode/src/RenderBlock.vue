@@ -6,6 +6,7 @@
       ref="blockRef"
       :title="attbutes.title"
       :class="attbutes.className"
+      @mousedown="mouseDownFunc"
     >
       <Mapping :styleValue="insideStyle" :attbutes="attbutes" :typeKey="block.key"></Mapping>
     </div>
@@ -86,22 +87,39 @@
         >
           <b class="horiz"></b>
         </i>
+        <i
+          class="editor-rotator editor-transition"
+          @mousedown.prevent="mouseRotate($event, block)"
+          @mousedown.stop
+          :style="{ transform: `rotate(${-block.rotate}deg)` }"
+        >
+          <!-- <b style="transform: matrix(1, 0, 0, 1, 0, 0)">
+            <span style="display: none">0°</span>
+          </b> -->
+          <svg-icon iconName="rotate" className="rotate"></svg-icon>
+          <span class="rotate-value" :style="{ display: isRotate ? '' : 'none' }">
+            {{ block.rotate }}°
+          </span>
+        </i>
       </div>
     </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from "vue"
+import { defineComponent, ref, computed, reactive } from "vue"
 import type { Ref } from "vue"
 
 import Mapping from "./Mapping.vue"
+import SvgIcon from "@/components/common/SvgIcon.vue"
 
 export default defineComponent({
   name: "RenderBlock",
   components: {
     Mapping,
+    SvgIcon,
   },
+  emits: ["draggingState"],
   props: {
     block: {
       type: Object as any,
@@ -115,7 +133,13 @@ export default defineComponent({
       default: false,
     },
   },
-  setup(props) {
+  setup(props, ctx) {
+    // 是否正在旋转
+    let isRotate = ref(false)
+    const blockCenterPos = reactive({
+      x: 0,
+      y: 0,
+    })
     let blockRef = ref<any>(null)
     //外部基本样式
     const externalStyle: Ref<any> = computed(() => ({
@@ -135,6 +159,7 @@ export default defineComponent({
           ? props.block.height
           : 50
       }px`,
+      transform: `rotate(${props.block.rotate}deg)`,
     }))
     // 内部基本样式
     const insideStyle: Ref<any> = computed(() => ({
@@ -204,9 +229,16 @@ export default defineComponent({
         })
         .join(" ")
     }
+    const mouseDownFunc = (event: any) => {
+      const box = event.target.getBoundingClientRect() as DOMRect
+      blockCenterPos.x = box.left + box.width / 2
+      blockCenterPos.y = box.top + box.height / 2
+    }
+    // 鼠标边框缩放
     const mouseZoom = (event: MouseEvent, block: any, type: string) => {
       block.focus = true
       block.dragging = true
+      ctx.emit("draggingState", true)
       document.onmousemove = (e) => {
         let scaleVal = e.movementX / (block.width / block.height)
         if (type === "sw") {
@@ -245,16 +277,60 @@ export default defineComponent({
       }
       document.onmouseup = function () {
         block.dragging = false
+        ctx.emit("draggingState", false)
+        document.onmousemove = document.onmouseup = null
+      }
+    }
+    // 鼠标旋转
+    const mouseRotate = (event: MouseEvent, block: any) => {
+      block.focus = true
+      block.dragging = true
+      isRotate.value = true
+      ctx.emit("draggingState", true)
+      const stopover = {
+        x: event.pageX,
+        y: event.pageY,
+      }
+      let rotate = block.rotate
+      document.onmousemove = (e: MouseEvent) => {
+        const movepoint = {
+          x: e.pageX,
+          y: e.pageY,
+        }
+        let aSquare = (stopover.x - movepoint.x) ** 2 + (stopover.y - movepoint.y) ** 2
+        if (aSquare > 0) {
+          let bSquare =
+            (blockCenterPos.x - movepoint.x) ** 2 + (blockCenterPos.y - movepoint.y) ** 2
+          let cSquare = (blockCenterPos.x - stopover.x) ** 2 + (blockCenterPos.y - stopover.y) ** 2
+          let cosA = (bSquare + cSquare - aSquare) / (2 * Math.sqrt(bSquare) * Math.sqrt(cSquare))
+          let arccosA = Math.round((Math.acos(cosA) * 180) / Math.PI)
+          let direct =
+            (movepoint.x - blockCenterPos.x) * (stopover.y - blockCenterPos.y) -
+            (movepoint.y - blockCenterPos.y) * (stopover.x - blockCenterPos.x)
+          if (direct > 0) {
+            block.rotate = (rotate - arccosA) % 360
+          } else {
+            block.rotate = (rotate + arccosA) % 360
+          }
+        }
+      }
+      document.onmouseup = function () {
+        block.dragging = false
+        isRotate.value = false
+        ctx.emit("draggingState", false)
         document.onmousemove = document.onmouseup = null
       }
     }
     return {
+      isRotate,
       blockRef,
       externalStyle,
       insideStyle,
       attbutes,
       focusBox,
+      mouseDownFunc,
       mouseZoom,
+      mouseRotate,
     }
   },
 })
@@ -337,6 +413,45 @@ export default defineComponent({
     top: 100%;
     cursor: ns-resize;
   }
+  .editor-rotator {
+    cursor: url("https://cdn.dancf.com/odyssey-editor/img/ic_mouse_rotation_0.1c6c9df0.svg") 11 9,
+      pointer;
+  }
+  .editor-transition {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    z-index: 4;
+    margin: 14px 0 0 -11px;
+    // cursor: pointer;
+    opacity: 1;
+    .rotate {
+      width: 20px;
+      height: 20px;
+      position: relative;
+      z-index: 2;
+      padding: 4px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      opacity: 1;
+    }
+    .rotate-value {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      height: 28px;
+      padding: 0 8px;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 28px;
+      color: #fff;
+      background: #0e1217;
+      border-radius: 4px;
+      -webkit-transform: translateX(-50%);
+      transform: translateX(-50%);
+    }
+  }
   .spot {
     width: 10px;
     height: 10px;
@@ -374,10 +489,12 @@ export default defineComponent({
   content: "";
 }
 .focus-box-drag {
-  opacity: 0.3;
-  border: 1px solid #6ccfff;
   b {
     opacity: 0;
   }
+}
+.focus-box-drag::before {
+  opacity: 0.3;
+  border: 2px solid #6ccfff;
 }
 </style>

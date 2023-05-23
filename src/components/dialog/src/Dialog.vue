@@ -27,10 +27,9 @@
               :name="type"
               :action="uploadUrl"
               :accept="uploadAcceptType"
-              multiple
-              :on-success="uploadResult"
-              :on-error="uploadResult"
               :show-file-list="false"
+              :auto-upload="false"
+              :on-change="uploadFiles"
             >
               <el-button type="primary" size="large">上传</el-button>
             </el-upload>
@@ -46,6 +45,7 @@
                 >
                   <!-- <img :src="item.path" /> -->
                   <template v-if="type === 'img'">
+                    <!-- {{ item.path }} -->
                     <el-image
                       class="img"
                       :src="item.path"
@@ -54,7 +54,6 @@
                       :initial-index="index"
                       @close="mouseInterId('')"
                       fit="cover"
-                      lazy
                     />
                   </template>
                   <template v-else-if="type === 'video'">
@@ -96,6 +95,8 @@ import SvgIcon from "@/components/common/SvgIcon.vue"
 import { defineComponent, Ref, computed, ref, reactive, onMounted } from "vue"
 
 import ShowVideo from "./ShowVideo.vue"
+
+import { SliceUploadVideo } from "@/service/videos/worker"
 
 export default defineComponent({
   name: "Dialog",
@@ -215,8 +216,15 @@ export default defineComponent({
         return ""
       }
     })
+    const uploadFiles = async (file: any) => {
+      const result = await SliceUploadVideo(file.raw)
+      if (result.code === 200) {
+        ctx.emit("getDatas")
+      }
+    }
     // 上传成功后重新获取数据
     const uploadResult = (result: any) => {
+      console.log(result)
       if (result && result.code === 200) {
         ctx.emit("getDatas")
       }
@@ -256,6 +264,7 @@ export default defineComponent({
       mouseInterId,
       deleteData,
       publishImage,
+      uploadFiles,
     }
   },
 })
@@ -279,7 +288,7 @@ export default defineComponent({
   .image-list {
     margin: 10px 0;
     display: flex;
-    // justify-content: space-around;
+    justify-content: flex-start;
     flex-wrap: wrap;
     .list-item {
       margin-right: 8px;
