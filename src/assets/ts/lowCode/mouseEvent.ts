@@ -3,6 +3,7 @@ import { reactive } from "vue"
 // let position = computed(() => store.getters["LowCodeModule/getModulePosition"])
 
 export function mouseDown(event: MouseEvent, block: any, position: any, nearGuidelines: any) {
+  console.log(event)
   const startPos = reactive({
     top: 10,
     left: 10,
@@ -37,16 +38,18 @@ export function mouseDown(event: MouseEvent, block: any, position: any, nearGuid
       block.top + block.height,
     ]
     position[block.id] = pos
-    nearGuidelines = []
-    for (let i = 0; i < guidelines.length; i++) {
-      nearGuidelines[i] = guidelines[i]
-    }
+    nearGuidelines = [...guidelines]
+    // for (let i = 0; i < guidelines.length; i++) {
+    //   nearGuidelines[i] = guidelines[i]
+    // }
   }
   startPos.top = block.top
   startPos.left = block.left
   document.onmouseup = function () {
     block.dragging = false
-    document.onmousemove = document.onmouseup = null
+    setTimeout(() => {
+      document.onmousemove = document.onmouseup = null
+    })
   }
 }
 

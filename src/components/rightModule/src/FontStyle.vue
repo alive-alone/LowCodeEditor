@@ -166,11 +166,11 @@ export default defineComponent({
     ]
     const fontFamilyArr = [
       ["默认字体", ""],
-      ["签名字体", "EN-autograph"],
-      ["钢笔字体", "Pen"],
-      ["手写字体", "Handwritiong"],
-      ["墨体", "Ink"],
-      ["毛笔体", "Writing-brush"],
+      ["签名字体", "Long Cang"],
+      ["钢笔字体", "ZCOOL XiaoWei"],
+      ["手写字体", "Ma Shan Zheng"],
+      ["墨体", "ZCOOL KuaiLe"],
+      ["毛笔体", "Zhi Mang Xing"],
     ]
     const fontFimalyOptions = Array.from({ length: 6 }).map((_, index) => ({
       value: fontFamilyArr[index][1],

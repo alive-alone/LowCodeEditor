@@ -12,6 +12,7 @@ import { defineComponent } from "vue"
 
 import ShowModule from "./ShowModule.vue"
 import ShowVideos from "./ShowVideos.vue"
+import { BASE_URL } from "@/service/request/config"
 
 export default defineComponent({
   name: "AddImage",
@@ -25,8 +26,8 @@ export default defineComponent({
     const title = ["为你推荐"]
     const videos = [
       [
-        "http://127.0.0.1:3000/public/videos/20230123/20190717195324.mp4",
-        "http://127.0.0.1:3000/public/videos/20230123/49801469240d458cba6bb02ea6645d59.mp4",
+        `${BASE_URL}/public/show/videos/20190717195324.mp4`,
+        `${BASE_URL}/public/show/videos/49801469240d458cba6bb02ea6645d59.mp4`,
       ],
     ]
     const addImage = (values: { src: string; scale: number }) => {

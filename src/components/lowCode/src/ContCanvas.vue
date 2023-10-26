@@ -1,6 +1,7 @@
 <template>
   <div class="cont-canvas">
     <div class="canvas-body" id="canvasBody" :style="{ transform: `scale(${canvasScale})` }">
+      <!-- <div class="canvas-body" id="canvasBody"> -->
       <div class="content-canvas" id="canvas">
         <template v-for="block in blocks" :key="block.id">
           <RenderBlock
@@ -44,7 +45,7 @@
       @publishImage="publishImage"
     ></Dialog>
   </div>
-  <button @click="exportAsPicture">click</button>
+  <!-- <button @click="exportAsPicture">click</button> -->
 </template>
 
 <script lang="ts">
@@ -111,7 +112,7 @@ export default defineComponent({
       transform: `rotate(0deg)`,
     })
     // canvas 缩放比例
-    let canvasScale = ref(0.8)
+    let canvasScale = ref(1)
     // dialog 显示状态
     let dialogVisible = ref(false)
     // 代码块
@@ -183,6 +184,7 @@ export default defineComponent({
     }
     // 鼠标按下事件
     const mouseDown = (event: MouseEvent, block: any, position: any) => {
+      console.log(event)
       const startPos = reactive({
         top: 10,
         left: 10,
@@ -193,14 +195,13 @@ export default defineComponent({
       const x1 = event.clientX
       const y1 = event.clientY
       document.onmousemove = (e) => {
-        // console.log(e)
         // 标记正在拖拽
         changeIsDragging(true)
         block.dragging = true
         const x2 = e.clientX
         const y2 = e.clientY
-        const computedTop = y2 - y1 + startPos.top
-        const computedLeft = x2 - x1 + startPos.left
+        const computedTop = (y2 - y1) / canvasScale.value + startPos.top
+        const computedLeft = (x2 - x1) / canvasScale.value + startPos.left
         const { difLeft, difTop, guidelines } = computedNearBlockcs(
           position,
           computedTop,
@@ -209,12 +210,16 @@ export default defineComponent({
           block.height,
           block.id
         )
-        block.top = computedTop + difTop
-        block.left = computedLeft + difLeft
         // let difY = computedTop + difTop - block.top
         // let difX = computedLeft + difLeft - block.left
         // ctx.emit("blocksMove", { difTop: difY, difLeft: difX })
         // console.log(block.left, block.top)
+
+        block.top = computedTop + difTop
+        block.left = computedLeft + difLeft
+        // block.top = computedTop
+        // block.left = computedLeft
+        // console.log(computedTop, computedLeft, x2, y2)
         const pos = [
           block.left,
           block.left + block.width / 2,
@@ -229,6 +234,7 @@ export default defineComponent({
       startPos.top = block.top
       startPos.left = block.left
       document.onmouseup = function () {
+        console.log("document.onmouseup")
         block.dragging = false
         document.onmousemove = document.onmouseup = null
       }

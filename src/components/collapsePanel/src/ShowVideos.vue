@@ -50,6 +50,7 @@ export default defineComponent({
         display: flex;
         justify-content: center;
         align-items: center;
+        overflow: hidden;
         .video-box_video {
           height: 120px;
           background-color: #f8fafc;
