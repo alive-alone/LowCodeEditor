@@ -93,6 +93,7 @@
 <script lang="ts">
 import SvgIcon from "@/components/common/SvgIcon.vue"
 import { defineComponent, Ref, computed, ref, reactive, onMounted } from "vue"
+import { BASE_URL } from "@/service/request/config"
 
 import ShowVideo from "./ShowVideo.vue"
 
@@ -200,9 +201,9 @@ export default defineComponent({
     })
     const uploadUrl = computed(() => {
       if (props.type === "img") {
-        return "http://127.0.0.1:3000/images"
+        return `${BASE_URL}/images`
       } else if (props.type === "video") {
-        return "http://127.0.0.1:3000/videos"
+        return `${BASE_URL}/videos`
       } else {
         return ""
       }
